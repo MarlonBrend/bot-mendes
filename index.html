@@ -1,95 +1,109 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bot Mendes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bot Mendes - Roleta Inteligente</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-image: url('https://raw.githubusercontent.com/MarlonBrend/bot-mendes/principal/arquivo_00000000690861f788805542c119b1de.png');
+      color: white;
+      background: url('bg-lasvegas.jpg') no-repeat center center fixed;
       background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
     }
     .container {
-      background-color: rgba(0, 0, 0, 0.7);
-      max-width: 600px;
-      margin: 60px auto;
-      padding: 30px;
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 2rem;
+      max-width: 800px;
+      margin: 2rem auto;
       border-radius: 20px;
-      color: #fff;
-      text-align: center;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
     }
     textarea {
       width: 100%;
-      height: 100px;
-      margin-top: 20px;
-      padding: 10px;
+      height: 150px;
+      font-size: 1rem;
+      padding: 1rem;
       border-radius: 10px;
       border: none;
-      resize: none;
-      font-size: 16px;
     }
     button {
-      background-color: red;
-      color: white;
+      padding: 1rem 2rem;
+      background: red;
       border: none;
       border-radius: 10px;
-      padding: 12px 20px;
-      font-size: 16px;
-      margin-top: 15px;
+      font-size: 1rem;
+      color: white;
       cursor: pointer;
+      margin-top: 1rem;
     }
-    #sugestao {
-      margin-top: 20px;
-      font-weight: bold;
-      font-size: 20px;
+    .resultado {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #222;
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Bot Mendes</h1>
-    <p>Esse bot analisa os últimos números da roleta e sugere a melhor aposta!</p>
+    <h1>Bot Mendes - Análise Inteligente de Roleta</h1>
+    <p>Insira os últimos 500 números da roleta (separados por vírgula):</p>
+    <textarea id="input-numeros" placeholder="Ex: 7, 22, 36, 0, 13..."></textarea>
+    <button onclick="analisar()">Analisar Mesa</button><div id="resultado" class="resultado"></div>
 
-    <textarea id="inputNumeros" placeholder="Cole aqui os últimos 500 números da roleta..."></textarea>
-    <br>
-    <button onclick="analisar()">Analisar</button>
-    <br>
-    <button onclick="copiarSugestao()">Copiar sugestão</button>
-
-    <div id="sugestao">Aguardando dados da roleta...</div>
-  </div>
-
-  <script>
+  </div>  <script>
     function analisar() {
-      const texto = document.getElementById('inputNumeros').value;
-      const numeros = texto.match(/\d+/g)?.map(n => parseInt(n)) || [];
+      const input = document.getElementById("input-numeros").value;
+      const numeros = input.split(",").map(n => parseInt(n.trim())).filter(n => !isNaN(n));
 
-      if (numeros.length < 10) {
-        document.getElementById('sugestao').innerText = 'Insira pelo menos 10 números válidos!';
+      if (numeros.length < 100) {
+        alert("Insira pelo menos 100 números para uma boa análise.");
         return;
       }
 
-      const frequencia = {};
-      numeros.forEach(num => {
-        frequencia[num] = (frequencia[num] || 0) + 1;
+      const estatisticas = {
+        vermelho: [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36],
+        preto: [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35],
+        colunas: [[], [], []],
+        duzias: [[], [], []],
+        dezenas: Array(4).fill().map(() => []),
+        cavalos: {},
+        repetidos: {},
+        puxadores: {}
+      };
+
+      numeros.forEach((n, i) => {
+        if (n === 0) return;
+        estatisticas.colunas[(n - 1) % 3].push(n);
+        estatisticas.duzias[Math.floor((n - 1) / 12)].push(n);
+        estatisticas.dezenas[Math.floor((n - 1) / 10)].push(n);
+
+        estatisticas.repetidos[n] = (estatisticas.repetidos[n] || 0) + 1;
+
+        if (i >= 1) {
+          const anterior = numeros[i - 1];
+          if (!estatisticas.puxadores[anterior]) estatisticas.puxadores[anterior] = [];
+          estatisticas.puxadores[anterior].push(n);
+        }
       });
 
-      const maisFrequente = Object.entries(frequencia).sort((a, b) => b[1] - a[1])[0][0];
-      const cor = (maisFrequente == 0) ? 'Verde' : (maisFrequente % 2 == 0 ? 'Preto' : 'Vermelho');
+      const maisRepetido = Object.entries(estatisticas.repetidos).sort((a,b) => b[1]-a[1])[0][0];
 
-      document.getElementById('sugestao').innerText = `Sugestão: Aposte no número ${maisFrequente} (${cor})`;
-    }
+      let corMaisForte = 'empate';
+      const vermelhoCount = numeros.filter(n => estatisticas.vermelho.includes(n)).length;
+      const pretoCount = numeros.filter(n => estatisticas.preto.includes(n)).length;
+      if (vermelhoCount > pretoCount) corMaisForte = 'Vermelho';
+      else if (pretoCount > vermelhoCount) corMaisForte = 'Preto';
 
-    function copiarSugestao() {
-      const texto = document.getElementById('sugestao').innerText;
-      navigator.clipboard.writeText(texto).then(() => {
-        alert("Sugestão copiada!");
-      });
+      const sugestao = `
+        Cor mais forte: <b>${corMaisForte}</b><br>
+        Número mais repetido: <b>${maisRepetido}</b><br>
+        Coluna com mais acertos: <b>${estatisticas.colunas.map(c => c.length).indexOf(Math.max(...estatisticas.colunas.map(c => c.length))) + 1}</b><br>
+        Dúzia com mais acertos: <b>${estatisticas.duzias.map(d => d.length).indexOf(Math.max(...estatisticas.duzias.map(d => d.length))) + 1}</b>
+      `;
+
+      document.getElementById("resultado").innerHTML = sugestao;
     }
-  </script>
-</body>
+  </script></body>
 </html>
