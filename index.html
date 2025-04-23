@@ -1,45 +1,51 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bot Mendes</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-image: url('arquivo_00000000690861f788805542c119b1de.png');
+      background-image: url('https://raw.githubusercontent.com/MarlonBrend/bot-mendes/principal/arquivo_00000000690861f788805542c119b1de.png');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      background-attachment: fixed;
-      color: white;
-      text-shadow: 1px 1px 3px black;
     }
-
     .container {
-      backdrop-filter: blur(5px);
-      background-color: rgba(0, 0, 0, 0.6);
-      padding: 20px;
-      margin: 40px auto;
+      background-color: rgba(0, 0, 0, 0.7);
       max-width: 600px;
+      margin: 60px auto;
+      padding: 30px;
       border-radius: 20px;
+      color: #fff;
       text-align: center;
     }
-
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
+    textarea {
+      width: 100%;
+      height: 100px;
       margin-top: 20px;
-      cursor: pointer;
-      border: none;
+      padding: 10px;
       border-radius: 10px;
+      border: none;
+      resize: none;
+      font-size: 16px;
+    }
+    button {
       background-color: red;
       color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 16px;
+      margin-top: 15px;
+      cursor: pointer;
     }
-
-    button:hover {
-      background-color: darkred;
+    #sugestao {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 20px;
     }
   </style>
 </head>
@@ -47,11 +53,37 @@
   <div class="container">
     <h1>Bot Mendes</h1>
     <p>Esse bot analisa os últimos números da roleta e sugere a melhor aposta!</p>
+
+    <textarea id="inputNumeros" placeholder="Cole aqui os últimos 500 números da roleta..."></textarea>
+    <br>
+    <button onclick="analisar()">Analisar</button>
+    <br>
     <button onclick="copiarSugestao()">Copiar sugestão</button>
-    <p id="sugestao">Aguardando dados da roleta...</p>
+
+    <div id="sugestao">Aguardando dados da roleta...</div>
   </div>
 
   <script>
+    function analisar() {
+      const texto = document.getElementById('inputNumeros').value;
+      const numeros = texto.match(/\d+/g)?.map(n => parseInt(n)) || [];
+
+      if (numeros.length < 10) {
+        document.getElementById('sugestao').innerText = 'Insira pelo menos 10 números válidos!';
+        return;
+      }
+
+      const frequencia = {};
+      numeros.forEach(num => {
+        frequencia[num] = (frequencia[num] || 0) + 1;
+      });
+
+      const maisFrequente = Object.entries(frequencia).sort((a, b) => b[1] - a[1])[0][0];
+      const cor = (maisFrequente == 0) ? 'Verde' : (maisFrequente % 2 == 0 ? 'Preto' : 'Vermelho');
+
+      document.getElementById('sugestao').innerText = `Sugestão: Aposte no número ${maisFrequente} (${cor})`;
+    }
+
     function copiarSugestao() {
       const texto = document.getElementById('sugestao').innerText;
       navigator.clipboard.writeText(texto).then(() => {
