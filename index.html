@@ -1,109 +1,127 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bot Mendes - Roleta Inteligente</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bot Mendes - Análise de Roleta</title>
   <style>
     body {
-      margin: 0;
+      background: #121212;
+      color: #fff;
       font-family: Arial, sans-serif;
-      color: white;
-      background: url('bg-lasvegas.jpg') no-repeat center center fixed;
-      background-size: cover;
+      padding: 20px;
     }
-    .container {
-      background-color: rgba(0, 0, 0, 0.8);
-      padding: 2rem;
-      max-width: 800px;
-      margin: 2rem auto;
-      border-radius: 20px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    h1 {
+      text-align: center;
+      color: #e50914;
     }
     textarea {
       width: 100%;
       height: 150px;
-      font-size: 1rem;
-      padding: 1rem;
-      border-radius: 10px;
-      border: none;
+      margin-bottom: 10px;
+      font-size: 16px;
     }
     button {
-      padding: 1rem 2rem;
-      background: red;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
+      background-color: #e50914;
       color: white;
+      padding: 10px 20px;
+      border: none;
+      font-size: 16px;
       cursor: pointer;
-      margin-top: 1rem;
+      border-radius: 8px;
     }
-    .resultado {
-      margin-top: 2rem;
-      padding: 1rem;
-      background: #222;
+    .result {
+      margin-top: 20px;
+      background: #1e1e1e;
+      padding: 20px;
       border-radius: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Bot Mendes - Análise Inteligente de Roleta</h1>
-    <p>Insira os últimos 500 números da roleta (separados por vírgula):</p>
-    <textarea id="input-numeros" placeholder="Ex: 7, 22, 36, 0, 13..."></textarea>
-    <button onclick="analisar()">Analisar Mesa</button><div id="resultado" class="resultado"></div>
+  <h1>Bot Mendes - Análise de Roleta</h1>
+  <p>Cole abaixo os últimos 500 números da roleta (separados por vírgula):</p>
+  <textarea id="inputNumeros" placeholder="Exemplo: 12,34,0,1,25,16,..."></textarea>
+  <button onclick="analisar()">Analisar</button>
 
-  </div>  <script>
+  <div class="result" id="resultado"></div>
+
+  <script>
+    const vermelho = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+    const preto = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35];
+
     function analisar() {
-      const input = document.getElementById("input-numeros").value;
+      const input = document.getElementById("inputNumeros").value;
       const numeros = input.split(",").map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+      const total = numeros.length;
 
-      if (numeros.length < 100) {
-        alert("Insira pelo menos 100 números para uma boa análise.");
+      if (total < 50) {
+        document.getElementById("resultado").innerHTML = "Por favor, insira pelo menos 50 números.";
         return;
       }
 
-      const estatisticas = {
-        vermelho: [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36],
-        preto: [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35],
-        colunas: [[], [], []],
-        duzias: [[], [], []],
-        dezenas: Array(4).fill().map(() => []),
-        cavalos: {},
-        repetidos: {},
-        puxadores: {}
+      let cont = {
+        vermelho: 0,
+        preto: 0,
+        par: 0,
+        impar: 0,
+        zero: 0,
+        duzias: [0,0,0],
+        colunas: [0,0,0],
+        dezenas: Array(4).fill(0),
+        cavalos: {}
       };
 
-      numeros.forEach((n, i) => {
-        if (n === 0) return;
-        estatisticas.colunas[(n - 1) % 3].push(n);
-        estatisticas.duzias[Math.floor((n - 1) / 12)].push(n);
-        estatisticas.dezenas[Math.floor((n - 1) / 10)].push(n);
+      for (let i = 0; i < total; i++) {
+        const n = numeros[i];
 
-        estatisticas.repetidos[n] = (estatisticas.repetidos[n] || 0) + 1;
+        if (n === 0) cont.zero++;
+        if (vermelho.includes(n)) cont.vermelho++;
+        if (preto.includes(n)) cont.preto++;
+        if (n !== 0 && n % 2 === 0) cont.par++;
+        if (n % 2 === 1) cont.impar++;
 
-        if (i >= 1) {
-          const anterior = numeros[i - 1];
-          if (!estatisticas.puxadores[anterior]) estatisticas.puxadores[anterior] = [];
-          estatisticas.puxadores[anterior].push(n);
+        // Dúzias
+        if (n >= 1 && n <= 12) cont.duzias[0]++;
+        if (n >= 13 && n <= 24) cont.duzias[1]++;
+        if (n >= 25 && n <= 36) cont.duzias[2]++;
+
+        // Colunas
+        const col = (n - 1) % 3;
+        if (n >= 1 && n <= 36) cont.colunas[col]++;
+
+        // Dezenas
+        if (n >= 1 && n <= 9) cont.dezenas[0]++;
+        if (n >= 10 && n <= 19) cont.dezenas[1]++;
+        if (n >= 20 && n <= 29) cont.dezenas[2]++;
+        if (n >= 30 && n <= 36) cont.dezenas[3]++;
+
+        // Cavalos (pares seguidos)
+        if (i > 0) {
+          const par = [numeros[i-1], n].sort((a,b) => a - b).join("-");
+          cont.cavalos[par] = (cont.cavalos[par] || 0) + 1;
         }
-      });
+      }
 
-      const maisRepetido = Object.entries(estatisticas.repetidos).sort((a,b) => b[1]-a[1])[0][0];
+      const maisForte = Object.entries(cont.cavalos).sort((a,b) => b[1] - a[1]).slice(0, 5);
 
-      let corMaisForte = 'empate';
-      const vermelhoCount = numeros.filter(n => estatisticas.vermelho.includes(n)).length;
-      const pretoCount = numeros.filter(n => estatisticas.preto.includes(n)).length;
-      if (vermelhoCount > pretoCount) corMaisForte = 'Vermelho';
-      else if (pretoCount > vermelhoCount) corMaisForte = 'Preto';
-
-      const sugestao = `
-        Cor mais forte: <b>${corMaisForte}</b><br>
-        Número mais repetido: <b>${maisRepetido}</b><br>
-        Coluna com mais acertos: <b>${estatisticas.colunas.map(c => c.length).indexOf(Math.max(...estatisticas.colunas.map(c => c.length))) + 1}</b><br>
-        Dúzia com mais acertos: <b>${estatisticas.duzias.map(d => d.length).indexOf(Math.max(...estatisticas.duzias.map(d => d.length))) + 1}</b>
+      const resultado = `
+        <h2>Resultado:</h2>
+        <p><strong>Vermelho:</strong> ${cont.vermelho} (${((cont.vermelho/total)*100).toFixed(1)}%)</p>
+        <p><strong>Preto:</strong> ${cont.preto} (${((cont.preto/total)*100).toFixed(1)}%)</p>
+        <p><strong>Par:</strong> ${cont.par} / <strong>Ímpar:</strong> ${cont.impar}</p>
+        <p><strong>Zero:</strong> ${cont.zero}</p>
+        <p><strong>Dúzias:</strong> 1ª: ${cont.duzias[0]} | 2ª: ${cont.duzias[1]} | 3ª: ${cont.duzias[2]}</p>
+        <p><strong>Colunas:</strong> 1ª: ${cont.colunas[0]} | 2ª: ${cont.colunas[1]} | 3ª: ${cont.colunas[2]}</p>
+        <p><strong>Dezenas:</strong> 1-9: ${cont.dezenas[0]} | 10-19: ${cont.dezenas[1]} | 20-29: ${cont.dezenas[2]} | 30-36: ${cont.dezenas[3]}</p>
+        <p><strong>Pares de Cavalos + Frequentes:</strong></p>
+        <ul>
+          ${maisForte.map(p => `<li>${p[0]} apareceu ${p[1]}x</li>`).join("")}
+        </ul>
       `;
 
-      document.getElementById("resultado").innerHTML = sugestao;
+      document.getElementById("resultado").innerHTML = resultado;
     }
-  </script></body>
+  </script>
+</body>
 </html>
